@@ -5,7 +5,7 @@
 enchant();
 
 /**
- * ９方向の相対座標と対応するプレイヤーの向き
+ * ９方向の相対座標と対応する向き
  * [x, y, direction]
  * direction = 0:down, 1:left, 2:right, 3:up, -1:none
  */
@@ -19,7 +19,7 @@ var Player = Class.create(Sprite, {
     initialize: function(x, y) {
         Sprite.call(this, 32, 32);
 
-        this.image = game.assets['img/chara5.png'];
+        this.image = game.assets["img/chara5.png"];
         this.x = x * 32;
         this.y = y * 32;
         this.walk = 1;
@@ -75,8 +75,8 @@ var Player = Class.create(Sprite, {
                     && 0 <= y && y < baseMap.height     // Y軸の画面内判定
                     && !baseMap.hitTest(x, y)           // マップとの衝突判定
                     && isEnemy) {                       // 敵との衝突判定
-                this.moveScope[i].x = this.x + around[i][0];
-                this.moveScope[i].y = this.y + around[i][1];
+                this.moveScope[i].x = x;
+                this.moveScope[i].y = y;
         
                 game.rootScene.addChild(this.moveScope[i]);
             }
@@ -101,8 +101,8 @@ var Player = Class.create(Sprite, {
             var x = this.x + around[i][0];
             var y = this.y + around[i][1];
 
-            this.attackScope[i].x = this.x + around[i][0];
-            this.attackScope[i].y = this.y + around[i][1];
+            this.attackScope[i].x = x;
+            this.attackScope[i].y = y;
         
             game.rootScene.addChild(this.attackScope[i]);
         }
@@ -145,8 +145,8 @@ var Player = Class.create(Sprite, {
                 // プレイヤーのエフェクト
                 this.tl.delay(0)
                     .then(function() {
-                        game.assets['sound/slash.wav'].volume = 0.3;
-                        game.assets['sound/slash.wav'].play();
+                        game.assets["sound/slash.wav"].volume = 0.3;
+                        game.assets["sound/slash.wav"].play();
                     })
                     .then(function() {
                         this.frame = this.direction * 9 + 6;
@@ -168,8 +168,8 @@ var Player = Class.create(Sprite, {
 
                 // 敵のエフェクト
                 enemy[i].hp -= 10;
-                damage = new Label('10');
-                damage.color = '#fff';
+                damage = new Label("10");
+                damage.color = "#fff";
                 damage.moveTo(enemy[i].x + 8, enemy[i].y);
                 game.rootScene.addChild(damage);
                 damage.tl.delay(10)
@@ -189,7 +189,7 @@ var Enemy = Class.create(Sprite, {
     initialize: function(x, y) {
         Sprite.call(this, 32, 32);
 
-        this.image = game.assets['img/chara6.png'];
+        this.image = game.assets["img/chara6.png"];
         this.x = x * 32;
         this.y = y * 32;
         this.walk = 1;
@@ -242,8 +242,8 @@ var Enemy = Class.create(Sprite, {
                     && !baseMap.hitTest(x, y)           // マップとの衝突判定
                     && (x != player.x || y != player.y) // プレイヤーとの衝突判定
                     && isEnemy) {                       // 敵との衝突判定
-                this.moveScope[i].x = this.x + around[i][0];
-                this.moveScope[i].y = this.y + around[i][1];
+                this.moveScope[i].x = x;
+                this.moveScope[i].y = y;
         
                 game.rootScene.addChild(this.moveScope[i]);
             }
@@ -258,20 +258,20 @@ var Enemy = Class.create(Sprite, {
             game.rootScene.removeChild(this.moveScope[i]);
         }
     },
-    move: function(relX, relY, direction) {
+    move: function(relx, relY, direction) {
         this.tl.then(function() {
             this.isMoving = true;
             this.direction = direction;
         });
 
         // 進む先の絶対座標を取得
-        var absX = this.x + (relX ? relX / Math.abs(relX) * 32 : 0);
-        var absY = this.y + (relY ? relY / Math.abs(relY) * 32 : 0);
+        var absX = this.x + (relx ? relx / Math.abs(relx) * 32 : 0);
+        var absy = this.y + (rely ? rely / Math.abs(rely) * 32 : 0);
 
         // 移動可能か
         for (var i = 0; i < this.moveScope.length; i++) {
-            if (absX == this.moveScope[i].x && absY == this.moveScope[i].y) {
-                this.tl.moveBy(relX, 0, 8).moveBy(0, relY, 8);
+            if (absx == this.moveScope[i].x && absy == this.moveScope[i].y) {
+                this.tl.moveBy(relx, 0, 8).moveBy(0, rely, 8);
             }
         }
 
@@ -288,8 +288,8 @@ var Enemy = Class.create(Sprite, {
 
             if (x == player.x && y == player.y) {
                 // 効果音
-                game.assets['sound/attack.wav'].volume = 0.3;
-                game.assets['sound/attack.wav'].play();
+                game.assets["sound/attack.wav"].volume = 0.3;
+                game.assets["sound/attack.wav"].play();
 
                 this.delMoveField();
                 this.completed = false;
@@ -301,10 +301,10 @@ var Enemy = Class.create(Sprite, {
     beAround: function(vx, vy) {
         // プレイヤーとの接触判定
         var result = false;
-        for (var j = 1; j < around.length; j = j + 2) {
+        for (var i = 1; i < around.length; i = i + 2) {
             // 対象を中心とした４方向の絶対座標
-            var x = this.x + vx + around[j][0];
-            var y = this.y + vy + around[j][1];
+            var x = this.x + vx + around[i][0];
+            var y = this.y + vy + around[i][1];
 
             if (x == player.x && y == player.y) {
                 result = true;
@@ -336,7 +336,7 @@ window.onload = function() {
     // ゲーム全体の設定
     game = new Game(320, 320);  // グローバル変数として宣言
     game.fps = 30;
-    game.preload('img/chara5.png', 'img/chara6.png', 'img/map1.png', 'sound/slash.wav', 'sound/attack.wav');
+    game.preload("img/chara5.png", "img/chara6.png", "img/map1.png", "sound/slash.wav", "sound/attack.wav");
     game.keybind(88, 'x');
     game.keybind(90, 'z');
     game.hasTurned = "Player";
@@ -344,7 +344,7 @@ window.onload = function() {
     game.onload = function() {
         // マップ
         baseMap = new Map(16, 16);
-        baseMap.image = game.assets['img/map1.png'];
+        baseMap.image = game.assets["img/map1.png"];
         baseMap.loadData([
             [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,101,  1,  1,  1,  1,  1,  1],
             [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,101,  1,  1,  1,  1,  1,  1],
@@ -392,7 +392,7 @@ window.onload = function() {
         game.rootScene.addChild(baseMap);
 
         foregroundMap = new Map(16, 16);
-        foregroundMap.image = game.assets['img/map1.png'];
+        foregroundMap.image = game.assets["img/map1.png"];
         foregroundMap.loadData([
             [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
             [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
@@ -431,24 +431,26 @@ window.onload = function() {
         player = new Player(5, 2);
 
         // キャプション
-        caption1 = new Label("方向キー：移動・選択");
-        caption1.color = '#fff';
-        caption1.font = "'ＭＳ ゴシック'";
-        caption1.moveTo(0, 0);
-        game.rootScene.addChild(caption1);
-        caption2 = new Label("Zキー：決定");
-        caption2.color = '#fff';
-        caption2.font = "'ＭＳ ゴシック'";
-        caption2.moveTo(0, 10);
-        game.rootScene.addChild(caption2);
-        caption2 = new Label("Xキー：キャンセル");
-        caption2.color = '#fff';
-        caption2.font = "'ＭＳ ゴシック'";
-        caption2.moveTo(0, 20);
-        game.rootScene.addChild(caption2);
+        notes1 = new Label("方向キー：移動・選択");
+        notes1.color = "#fff";
+        notes1.font = "ＭＳ ゴシック";
+        notes1.moveTo(0, 0);
+        game.rootScene.addChild(notes1);
+
+        notes2 = new Label("Zキー：決定");
+        notes2.color = "#fff";
+        notes2.font = "ＭＳ ゴシック";
+        notes2.moveTo(0, 10);
+        game.rootScene.addChild(notes2);
+
+        notes3 = new Label("Xキー：キャンセル");
+        notes3.color = "#fff";
+        notes3.font = "ＭＳ ゴシック";
+        notes3.moveTo(0, 20);
+        game.rootScene.addChild(notes3);
 
         // フレーム毎のイベント処理
-        game.addEventListener('enterframe', function() {
+        game.addEventListener("enterframe", function() {
             if (this.hasTurned == "Player") {
                 player.opacity = 1;
                 for (var i = 0; i < enemy.length; i++) {
@@ -460,7 +462,7 @@ window.onload = function() {
                     player.setMoveField();
                 } else {
                     // 移動フェーズ
-                    if (!player.isMoving && !player.isAttack && !player.isTurnend) {
+                    if (!player.isMoving && !player.isAttack) {
                         if (this.input.down) {
                             player.move(0, 32, 0);
                         } else if (this.input.left) {
