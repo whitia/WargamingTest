@@ -49,7 +49,7 @@ var Player = Class.create(Sprite, {
     },
     onenterframe: function() {
         if (!(this.phase == "Action")) {
-            this.frame = this.direction * 9 + this.walk;
+            this.frame = this.direction * 3 + this.walk;
             if (!(game.frame % 5)) {
                 this.walk++;
                 this.walk %= 3;
@@ -118,29 +118,11 @@ var Player = Class.create(Sprite, {
         }
     },
     attackScene: function() {
-        fieldScene.addChild(attackPhaseBack);
-        fieldScene.addChild(attackPhaseField);
-
-        enemyAvatar = new Sprite(48, 48);
-        enemyAvatar.moveTo(40, 105);
-        enemyAvatar.image = game.assets["img/mon_192.gif"];
-        fieldScene.addChild(enemyAvatar);
-
-        playerAvatar = new Avatar("1:1:4:2002:21011:2211");
-        playerAvatar.left();
-        playerAvatar.moveTo(210, 100);
-        fieldScene.addChild(playerAvatar);
-
-        // game.assets["sound/slash.wav"].volume = 0.3;
-        // game.assets["sound/slash.wav"].play();
-        playerAvatar.action = "attack";
-
-        // this.phaseEnd();
     },
     phaseEnd: function() {
-        this.opacity = 0.3;
         this.walk = 1;
         this.delMoveField();
+        this.delAttackField();
         this.completed = false;
         this.isAttack = false;
         this.phase = "Move";
@@ -156,7 +138,6 @@ var Enemy = Class.create(Sprite, {
         this.image = game.assets["img/chara6.png"];
         this.x = x * 32;
         this.y = y * 32;
-        this.opacity = 0.3;
         this.walk = 1;
         this.direction = 0;
         this.vx = this.vy = 0;
@@ -241,9 +222,9 @@ var Enemy = Class.create(Sprite, {
         return result;
     },
     phaseEnd: function() {
-        this.opacity = 0.3;
         this.delMoveField();
         this.completed = false;
+        this.isAttack = false;
         game.phase = "Player";
     }
 });
@@ -270,7 +251,7 @@ window.onload = function() {
     // ゲーム全体の設定
     game = new Game(320, 320);  // グローバル変数として宣言
     game.fps = 30;
-    game.preload("img/chara5.png", "img/chara6.png", "img/map1.png", "sound/slash.wav", "sound/attack.wav", "img/japan_map001.png", "img/mon_192.gif");
+    game.preload("img/chara5.png", "img/chara6.png", "img/map1.png", "sound/slash.wav", "sound/attack.wav", "img/mon_192.gif");
     game.keybind(88, 'x');
     game.keybind(90, 'z');
     game.phase = "Player";
@@ -303,57 +284,67 @@ window.onload = function() {
             [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
             [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
             [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
+            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
             [ 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84, 84],
             [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100],
-            [100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100,100],
-            [116,116,116,116,116,116,116,116,116,116,116,116,116,100,100,100,100,116,116,116],
-            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,100,101,  1,  1,  1],
-            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,100,101,  1,  1,  1],
-            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,100,101,  1,  1,  1],
-            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,100,101,  1,  1,  1],
-            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,100,101,  1,  1,  1],
-            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,100,101,  1,  1,  1],
-            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,100,101,  1,  1,  1],
-            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,100,101,  1,  1,  1],
-            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,100,101,  1,  1,  1]
+            [116,116,116,116,116,116,116,116,116,116,116,116,116,100,100,100,116,116,116,116],
+            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,101,  1,  1,  1,  1],
+            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,101,  1,  1,  1,  1],
+            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,101,  1,  1,  1,  1],
+            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,101,  1,  1,  1,  1],
+            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,101,  1,  1,  1,  1],
+            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,101,  1,  1,  1,  1],
+            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,101,  1,  1,  1,  1],
+            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,101,  1,  1,  1,  1],
+            [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1, 99,100,101,  1,  1,  1,  1]
         ]);
         baseMap.collisionData = [
             [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
             [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
             [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
             [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1],
-            [  1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  0,  0,  0,  0],
-            [  1,  1,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1,  0,  0,  0,  0],
+            [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1],
+            [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  1],
             [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
             [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
             [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
             [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
             [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
             [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-            [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-            [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-            [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-            [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-            [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-            [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [  0,  0,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
+            [  0,  0,  1,  1,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
             [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
             [  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0]
         ];
         fieldScene.addChild(baseMap);
 
-        foregroundMap = new Map(32, 32);
-        foregroundMap.image = game.assets["img/japan_map001.png"];
+        foregroundMap = new Map(16, 16);
+        foregroundMap.image = game.assets["img/map1.png"];
         foregroundMap.loadData([
-            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [ 20, 21, -1, -1, -1, -1, -1, -1, -1, -1],
-            [ 31, 32, -1, -1, -1, -1, -1, 14, -1, -1],
-            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
-            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ 28, 28, 28, 28, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 60, 61],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 76, 77],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 28, 28],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ 60, 61, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ 76, 77, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, 60, 61, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, 76, 77, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+            [ -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
         ]);
         fieldScene.addChild(foregroundMap);
 
@@ -389,6 +380,16 @@ window.onload = function() {
         notes3.moveTo(0, 20);
         fieldScene.addChild(notes3);
 
+        // プレイヤーアバター
+		playerAvatar = new Avatar("1:1:1:2002:2110:2211");
+		playerAvatar.left();
+		playerAvatar.moveTo(180, 100);
+
+		// 敵アバター
+		enemyAvatar = new Sprite(48, 48);
+		enemyAvatar.moveTo(80, 105);
+		enemyAvatar.image = game.assets["img/mon_192.gif"];
+
         // フレーム毎のイベント処理
         game.addEventListener("enterframe", function() {
             if (this.phase == "Player") {
@@ -414,13 +415,13 @@ window.onload = function() {
                                 player.direction = 0;
                                 player.vy = 4;
                             } else if (this.input.left) {
-                                player.direction = 3;
+                                player.direction = 1;
                                 player.vx = -4;
                             } else if (this.input.right) {
                                 player.direction = 2;
                                 player.vx = 4;
                             } else if (this.input.up) {
-                                player.direction = 1;
+                                player.direction = 3;
                                 player.vy = -4;
                             } else if (this.input.z) {
                                 player.delMoveField();
@@ -444,6 +445,22 @@ window.onload = function() {
                     // 攻撃フェーズ
                     } else if (player.phase == "Attack") {
                         if (player.isAttack) {
+					        if (this.vFrame + 5 == this.frame) {
+					        	playerAvatar.action = "attack";
+					        } else if (this.vFrame + 25 == this.frame) {
+                                game.assets["sound/slash.wav"].volume = 0.3;
+                                game.assets["sound/slash.wav"].play();
+					         	enemyAvatar.opacity = 0;
+					        } else if (this.vFrame + 30 == this.frame) {
+					        	enemyAvatar.opacity = 1;
+					        	playerAvatar.action = "stop";
+					        } else if (this.vFrame + 40 == this.frame) {
+								fieldScene.removeChild(attackPhaseBack);
+								fieldScene.removeChild(attackPhaseField);
+								fieldScene.removeChild(enemyAvatar);
+								fieldScene.removeChild(playerAvatar);
+					        	player.phaseEnd();
+					        }
                         } else {
                             if (this.input.down) {
                                 player.attackScope[1].opacity = 0.3;
@@ -457,7 +474,7 @@ window.onload = function() {
                                 player.attackScope[3].opacity = 0.5;
                                 player.attackScope[5].opacity = 0.3;
                                 player.attackScope[7].opacity = 0.3;
-                                player.direction = 3;
+                                player.direction = 1;
                                 player.frame = player.direction * 9 + player.walk;
                             } else if (this.input.right) {
                                 player.attackScope[1].opacity = 0.3;
@@ -471,7 +488,7 @@ window.onload = function() {
                                 player.attackScope[3].opacity = 0.3;
                                 player.attackScope[5].opacity = 0.3;
                                 player.attackScope[7].opacity = 0.3;
-                                player.direction = 1;
+                                player.direction = 3;
                                 player.frame = player.direction * 9 + player.walk;
                             } else if (this.input.z) {
                                 for (var i = 1; i < player.attackScope.length; i = i + 2) {
@@ -483,7 +500,11 @@ window.onload = function() {
                                             player.attackScope[3].opacity = 0.3;
                                             player.attackScope[5].opacity = 0.3;
                                             player.attackScope[7].opacity = 0.3;
-                                            player.attackScene();
+									        fieldScene.addChild(attackPhaseBack);
+									        fieldScene.addChild(attackPhaseField);
+									        fieldScene.addChild(enemyAvatar);
+									        fieldScene.addChild(playerAvatar);
+                        					this.vFrame = this.frame;
                                             player.isAttack = true;
                                         }
                                     }
@@ -519,17 +540,17 @@ window.onload = function() {
                                         // X軸
                                         if (enemy[i].vx) {
                                             enemy[i].moveBy(enemy[i].vx, 0);
-                                            if ((enemy[i].vx && (enemy[i].x % 32) == 0)) {
+                                            if ((enemy[i].vx && !(enemy[i].x % 32))) {
                                                 enemy[i].vx = 0;
                                             }
                                         // Y軸
                                         } else if (enemy[i].vy) {
                                             enemy[i].moveBy(0, enemy[i].vy);
-                                            if ((enemy[i].vy && (enemy[i].y % 32) == 0)) {
+                                            if ((enemy[i].vy && !(enemy[i].y % 32))) {
                                                 enemy[i].vy = 0;
                                             }
                                         }
-                                        if (enemy[i].vx == 0 && enemy[i].vy == 0) {
+                                        if (!enemy[i].vx && !enemy[i].vy) {
                                             enemy[i].isMoving = false;
                                             enemy[i].phase = "Attack";
                                         }
@@ -561,19 +582,43 @@ window.onload = function() {
                                 }
                             // 攻撃フェーズ
                             } else if (enemy[i].phase == "Attack") {
-                                if (enemy[i].beAround(0, 0)) {
-                                    game.assets["sound/attack.wav"].volume = 0.3;
-                                    game.assets["sound/attack.wav"].play();
-                                }
-                                enemy[i].phase = "Wait";
-                                if (enemy.length != i + 1) {
-                                    enemy[i].opacity = 0.3;
-                                    enemy[i].delMoveField();
-                                    enemy[i].completed = false;
-                                    enemy[i + 1].phase = "Move";
-                                } else {
-                                    enemy[i].phaseEnd();
-                                }
+                            	if (enemy[i].isAttack) {
+					        		if (this.vFrame + 5 == this.frame) {
+					        			game.assets["sound/attack.wav"].volume = 0.3;
+					        			game.assets["sound/attack.wav"].play();
+					        		} else if (this.vFrame + 30 == this.frame) {
+										// fieldScene.removeChild(attackPhaseBack);
+										// fieldScene.removeChild(attackPhaseField);
+										// fieldScene.removeChild(enemyAvatar);
+										// fieldScene.removeChild(playerAvatar);
+		        //                         enemy[i].phase = "Wait";
+		        //                         if (enemy.length != i + 1) {
+		        //                             enemy[i].delMoveField();
+		        //                             enemy[i].completed = false;
+		        //                             enemy[i].isAttack = false;
+		        //                             enemy[i + 1].phase = "Move";
+		        //                         } else {
+		        //                             enemy[i].phaseEnd();
+		        //                         }
+					        		}
+                            	} else {
+	                                if (enemy[i].beAround(0, 0)) {
+										fieldScene.addChild(attackPhaseBack);
+										fieldScene.addChild(attackPhaseField);
+										fieldScene.addChild(enemyAvatar);
+										fieldScene.addChild(playerAvatar);
+	                        			this.vFrame = this.frame;
+	                        			enemy[i].isAttack = true;
+	                                } else {
+		                                enemy[i].phase = "Wait";
+		                                if (enemy.length != i + 1) {
+		                                	enemy[i].phaseEnd();
+		                                    enemy[i + 1].phase = "Move";
+		                                } else {
+		                                    enemy[i].phaseEnd();
+		                                }
+	                                }
+	                            }
                             }
                         }
                     }
