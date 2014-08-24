@@ -117,8 +117,6 @@ var Player = Class.create(Sprite, {
             fieldScene.removeChild(this.attackScope[i]);
         }
     },
-    attackScene: function() {
-    },
     phaseEnd: function() {
         this.walk = 1;
         this.delMoveField();
@@ -198,7 +196,6 @@ var Enemy = Class.create(Sprite, {
         }
 
         fieldScene.addChild(this);
-        this.completed = true;
     },
     delMoveField: function() {
         for (var i = 0; i < this.moveScope.length; i++) {
@@ -260,12 +257,14 @@ window.onload = function() {
         fieldScene = new Scene();
         game.replaceScene(fieldScene);
 
+        // 攻撃モーション中の背景（暗転）
         attackPhaseBack = new Entity();
         attackPhaseBack.width = 320;
         attackPhaseBack.height = 320;
         attackPhaseBack.opacity = 0.7;
         attackPhaseBack.backgroundColor = "#000";
 
+        // 攻撃モーション中の背景（帯）
         attackPhaseField = new Entity();
         attackPhaseField.width = 320;
         attackPhaseField.height = 70;
@@ -350,11 +349,6 @@ window.onload = function() {
 
         // 敵
         enemy = [
-            // new Enemy(Math.floor(Math.random() * 10), Math.floor(Math.random() * 10)),
-            // new Enemy(2, 3),
-            // new Enemy(6, 1),
-            // new Enemy(8, 7),
-            // new Enemy(1, 6),
             new Enemy(5, 6)
         ];
 
@@ -397,20 +391,24 @@ window.onload = function() {
 
                 // ターン開始時
                 if (!player.completed) {
-                    // if (this.frame / 30 > 1) {
-                        player.setMoveField();
-                        player.completed = true;
-                    // }
+                    player.setMoveField();
+                    player.completed = true;
                 } else {
                     // 移動フェーズ
                     if (player.phase == "Move") {
+                    	// 移動モーション中か
                         if (player.isMoving) {
+                        	// 移動
                             player.moveBy(player.vx, player.vy);
+
+                            // X軸方向かY軸方向に１マス進んだら移動終了
                             if ((player.vx && (player.x % 32) == 0) || (player.vy && (player.y % 32) == 0)) {
                                 player.isMoving = false;
                             }
                         } else {
                             player.vx = player.vy = 0;
+
+                        	// 方向キー入力待ち
                             if (this.input.down) {
                                 player.direction = 0;
                                 player.vy = 4;
@@ -423,13 +421,17 @@ window.onload = function() {
                             } else if (this.input.up) {
                                 player.direction = 3;
                                 player.vy = -4;
+                            // 移動フェーズ終了
                             } else if (this.input.z) {
                                 player.delMoveField();
                                 player.setAttackField();
                                 player.phase = "Attack";
+                            // プレイヤーフェーズ終了
                             } else if (this.input.x) {
                                 player.phaseEnd();
                             }
+
+                            // 方向キーが入力されたか
                             if (player.vx || player.vy) {
                                 // 進む先の座標
                                 var x = player.x + (player.vx ? player.vx / Math.abs(player.vx) * 32 : 0);
@@ -444,7 +446,9 @@ window.onload = function() {
                         }
                     // 攻撃フェーズ
                     } else if (player.phase == "Attack") {
+                    	// 攻撃モーション中か
                         if (player.isAttack) {
+                        	// 攻撃モーションに入ってからの経過フレームでエフェクトを順番に実行
 					        if (this.vFrame + 5 == this.frame) {
 					        	playerAvatar.action = "attack";
 					        } else if (this.vFrame + 25 == this.frame) {
@@ -459,9 +463,11 @@ window.onload = function() {
 								fieldScene.removeChild(attackPhaseField);
 								fieldScene.removeChild(enemyAvatar);
 								fieldScene.removeChild(playerAvatar);
+					        	// 攻撃フェーズ終了
 					        	player.phaseEnd();
 					        }
                         } else {
+                        	// 方向キー入力待ち
                             if (this.input.down) {
                                 player.attackScope[1].opacity = 0.3;
                                 player.attackScope[3].opacity = 0.3;
@@ -490,30 +496,37 @@ window.onload = function() {
                                 player.attackScope[7].opacity = 0.3;
                                 player.direction = 3;
                                 player.frame = player.direction * 9 + player.walk;
+                            // Zキー入力待ち
                             } else if (this.input.z) {
                                 for (var i = 1; i < player.attackScope.length; i = i + 2) {
                                     for (var j = 0; j < enemy.length; j++) {
-                                        if (player.attackScope[i].opacity == 0.5
-                                                && player.attackScope[i].x == enemy[j].x
-                                                && player.attackScope[i].y == enemy[j].y) {
+                                        if (player.attackScope[i].opacity == 0.5				// 攻撃方向を選択しているか
+                                                && player.attackScope[i].x == enemy[j].x        // X座標に敵がいるか
+                                                && player.attackScope[i].y == enemy[j].y) {		// Y座標に敵がいるか
+                                        	// 攻撃範囲の表示をリセット
                                             player.attackScope[1].opacity = 0.3;
                                             player.attackScope[3].opacity = 0.3;
                                             player.attackScope[5].opacity = 0.3;
                                             player.attackScope[7].opacity = 0.3;
+                                            // 攻撃モーション準備
 									        fieldScene.addChild(attackPhaseBack);
 									        fieldScene.addChild(attackPhaseField);
 									        fieldScene.addChild(enemyAvatar);
 									        fieldScene.addChild(playerAvatar);
+									        // 現在のフレームを取得
                         					this.vFrame = this.frame;
                                             player.isAttack = true;
                                         }
                                     }
                                 }
+                            // Xキー入力待ち
                             } else if (this.input.x) {
+                            	// 攻撃範囲の表示をリセット
                                 player.attackScope[1].opacity = 0.3;
                                 player.attackScope[3].opacity = 0.3;
                                 player.attackScope[5].opacity = 0.3;
                                 player.attackScope[7].opacity = 0.3;
+                                // 攻撃フェーズ終了
                                 player.delAttackField();
                                 player.setMoveField();
                                 player.phase = "Move";
@@ -526,42 +539,48 @@ window.onload = function() {
                     if (enemy[i].phase != "Wait") {
                         enemy[i].opacity = 1;
 
-                        // 移動範囲の設定
+                        // ターン開始時
                         if (!enemy[i].completed) {
                             enemy[i].setMoveField();
+                        	enemy[i].completed = true;
                         } else {
                             // 移動フェーズ
                             if (enemy[i].phase == "Move") {
+                            	// 既にプレイヤーと接近していたら攻撃フェーズへ移行
                                 if (enemy[i].beAround(0, 0)) {
                                     enemy[i].isMoving = false;
                                     enemy[i].phase = "Attack";
                                 } else {
+                                	// 移動モーション中か
                                     if (enemy[i].isMoving) {
-                                        // X軸
+                                        // X軸方向の移動
                                         if (enemy[i].vx) {
                                             enemy[i].moveBy(enemy[i].vx, 0);
+                                            // X軸方向に１マス進んだら移動終了
                                             if ((enemy[i].vx && !(enemy[i].x % 32))) {
                                                 enemy[i].vx = 0;
                                             }
-                                        // Y軸
+                                        // Y軸方向の移動
                                         } else if (enemy[i].vy) {
                                             enemy[i].moveBy(0, enemy[i].vy);
+                                            // Y軸方向に１マス進んだら移動終了
                                             if ((enemy[i].vy && !(enemy[i].y % 32))) {
                                                 enemy[i].vy = 0;
                                             }
                                         }
+                                        // X軸方向・Y軸方向に移動終了したか
                                         if (!enemy[i].vx && !enemy[i].vy) {
                                             enemy[i].isMoving = false;
                                             enemy[i].phase = "Attack";
                                         }
                                     } else {
-                                        // X軸
+                                        // X軸方向の移動判定
                                         if (enemy[i].x > player.x) {
                                             enemy[i].vx = -4;
                                         } else if (enemy[i].x < player.x) {
                                             enemy[i].vx = 4;
                                         }
-                                        // Y軸
+                                        // Y軸方向の移動判定
                                         if (enemy[i].y > player.y) {
                                             enemy[i].vy = -4;
                                         } else if (enemy[i].y < player.y) {
@@ -582,31 +601,36 @@ window.onload = function() {
                                 }
                             // 攻撃フェーズ
                             } else if (enemy[i].phase == "Attack") {
+                            	// 攻撃モーション中か
                             	if (enemy[i].isAttack) {
+                            		// 攻撃モーションに入ってからの経過フレームでエフェクトを順番に実行
 					        		if (this.vFrame + 5 == this.frame) {
 					        			game.assets["sound/attack.wav"].volume = 0.3;
 					        			game.assets["sound/attack.wav"].play();
 					        		} else if (this.vFrame + 30 == this.frame) {
-										// fieldScene.removeChild(attackPhaseBack);
-										// fieldScene.removeChild(attackPhaseField);
-										// fieldScene.removeChild(enemyAvatar);
-										// fieldScene.removeChild(playerAvatar);
-		        //                         enemy[i].phase = "Wait";
-		        //                         if (enemy.length != i + 1) {
-		        //                             enemy[i].delMoveField();
-		        //                             enemy[i].completed = false;
-		        //                             enemy[i].isAttack = false;
-		        //                             enemy[i + 1].phase = "Move";
-		        //                         } else {
-		        //                             enemy[i].phaseEnd();
-		        //                         }
+										fieldScene.removeChild(attackPhaseBack);
+										fieldScene.removeChild(attackPhaseField);
+										fieldScene.removeChild(enemyAvatar);
+										fieldScene.removeChild(playerAvatar);
+										// 行動中の敵を待機状態にする
+		                                enemy[i].phase = "Wait";
+		                                // 行動待ちの敵がいる場合、次の敵を行動可能にする
+		                                if (enemy.length != i + 1) {
+		                                	enemy[i].phaseEnd();
+		                                    enemy[i + 1].phase = "Move";
+		                                } else {
+		                                	// 敵フェーズ終了
+		                                    enemy[i].phaseEnd();
+		                                }
 					        		}
                             	} else {
 	                                if (enemy[i].beAround(0, 0)) {
+	                                	// 攻撃モーション準備
 										fieldScene.addChild(attackPhaseBack);
 										fieldScene.addChild(attackPhaseField);
 										fieldScene.addChild(enemyAvatar);
 										fieldScene.addChild(playerAvatar);
+										// 現在のフレームを取得
 	                        			this.vFrame = this.frame;
 	                        			enemy[i].isAttack = true;
 	                                } else {
