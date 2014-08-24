@@ -1,7 +1,7 @@
 (2014.08.24)
 <ul>
 <li>TimeLineの使用を廃止</li>
-<li>Avatarを導入</li>
+<li>Avatarを導入（試験的）</li>
 </ul>
 (2014.08.19)
 <ul>
