@@ -474,28 +474,28 @@ window.onload = function() {
                                 player.attackScope[5].opacity = 0.3;
                                 player.attackScope[7].opacity = 0.5;
                                 player.direction = 0;
-                                player.frame = player.direction * 9 + player.walk;
+                                player.frame = player.direction * 3 + player.walk;
                             } else if (this.input.left) {
                                 player.attackScope[1].opacity = 0.3;
                                 player.attackScope[3].opacity = 0.5;
                                 player.attackScope[5].opacity = 0.3;
                                 player.attackScope[7].opacity = 0.3;
                                 player.direction = 1;
-                                player.frame = player.direction * 9 + player.walk;
+                                player.frame = player.direction * 3 + player.walk;
                             } else if (this.input.right) {
                                 player.attackScope[1].opacity = 0.3;
                                 player.attackScope[3].opacity = 0.3;
                                 player.attackScope[5].opacity = 0.5;
                                 player.attackScope[7].opacity = 0.3;
                                 player.direction = 2;
-                                player.frame = player.direction * 9 + player.walk;
+                                player.frame = player.direction * 3 + player.walk;
                             } else if (this.input.up) {
                                 player.attackScope[1].opacity = 0.5;
                                 player.attackScope[3].opacity = 0.3;
                                 player.attackScope[5].opacity = 0.3;
                                 player.attackScope[7].opacity = 0.3;
                                 player.direction = 3;
-                                player.frame = player.direction * 9 + player.walk;
+                                player.frame = player.direction * 3 + player.walk;
                             // Zキー入力待ち
                             } else if (this.input.z) {
                                 for (var i = 1; i < player.attackScope.length; i = i + 2) {
