@@ -1,7 +1,9 @@
-<dl>
-<dt>(2014.08.24)</dt>
-<dd>TimeLineの使用を廃止</dd>
-<dd>Avatarを導入</dd>
-<dt>(2014.08.19)</dt>
-<dd>新規作成</dd>
-</dl>
+(2014.08.24)
+<ul>
+<li>TimeLineの使用を廃止</li>
+<li>Avatarを導入</li>
+</ul>
+(2014.08.19)
+<ul>
+<li>新規作成</li>
+</ul>
