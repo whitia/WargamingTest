@@ -17,7 +17,7 @@
 　●白螺子屋		http://hi79.web.fc2.com/<br>
 参考サイト
 =================
-≪enchant.js≫
+≪enchant.js≫<br>
 　http://blog.livedoor.jp/kamikaze_cyclone/archives/33044647.html<br>
 　http://tmlife.net/programming/javascript/enchant-js-100-tips.html<br>
 　http://www.ideaxidea.com/?s=enchant&x=0&y=0<br>
