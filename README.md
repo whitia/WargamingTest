@@ -1,4 +1,5 @@
-【使用素材】<br>
+使用素材
+=================
 ≪グラフィック≫<br>
 　●すきまの素材	http://wato5576.sukimakaze.com/<br>
 　●【Ｒド】		http://www.geocities.co.jp/Milano-Cat/3319/<br>
