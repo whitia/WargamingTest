@@ -1,19 +1,16 @@
-【使用素材】
+【使用素材】<br>
+≪グラフィック≫<br>
+　●すきまの素材	http://wato5576.sukimakaze.com/<br>
+　●【Ｒド】		http://www.geocities.co.jp/Milano-Cat/3319/<br>
+　●白螺子屋		http://hi79.web.fc2.com/<br>
+<br>
+【参考サイト】<br>
+≪アルゴリズム≫<br>
+　http://gumina.sakura.ne.jp/CREATION/OLD/MAKING/<br>
+　http://www5f.biglobe.ne.jp/~kenmo/program/SLG/move/move.html<br>
+　http://www.jyouhoukaiseki.com/index.html<br>
 
-≪グラフィック≫
-　●すきまの素材	http://wato5576.sukimakaze.com/
-　●【Ｒド】		http://www.geocities.co.jp/Milano-Cat/3319/
-　●白螺子屋		http://hi79.web.fc2.com/
-
-
-
-【参考サイト】
-
-≪アルゴリズム≫
-　http://gumina.sakura.ne.jp/CREATION/OLD/MAKING/
-　http://www5f.biglobe.ne.jp/~kenmo/program/SLG/move/move.html
-　http://www.jyouhoukaiseki.com/index.html
-
+【更新履歴】
 (2014.08.24)
 <ul>
 <li>TimeLineの使用を廃止</li>
