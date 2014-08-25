@@ -2,12 +2,6 @@
  * whitia
  */
 
- /**
-  * http://gumina.sakura.ne.jp/CREATION/OLD/MAKING/SESS04.htm
-  * http://www5f.biglobe.ne.jp/~kenmo/program/SLG/move/move.html
-  * http://www.jyouhoukaiseki.com/index.html
-  */
-
 enchant();
 
 /**
@@ -408,9 +402,9 @@ window.onload = function() {
 							// X軸方向かY軸方向に１マス進んだら移動終了
 							if ((player.vx && (player.x % 32) == 0) || (player.vy && (player.y % 32) == 0)) {
 								player.isMoving = false;
-								player.vx = player.vy = 0;
 							}
 						} else {
+							player.vx = player.vy = 0;
 							// 方向キー入力待ち
 							if (this.input.down) {
 								player.direction = 0;
