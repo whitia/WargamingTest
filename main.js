@@ -67,6 +67,8 @@ var Player = Class.create(Sprite, {
 			if (x == player.moveScope[i][0].x && y == player.moveScope[i][0].y) {
 				if (steps >= player.moveScope[i][1]) {
 					player.moveScope.splice(i, 1);
+				} else {
+					return;
 				}
 			}
 		}
@@ -96,9 +98,6 @@ var Player = Class.create(Sprite, {
 			scene.removeChild(enemy[i]);
 		}
 		for (var i = 0; i < player.moveScope.length; i++) {
-			// num = new Label(player.moveScope[i][1]);
-			// num.x = player.moveScope[i][0].x; num.y = player.moveScope[i][0].y;
-			// scene.addChild(num);
 			scene.addChild(player.moveScope[i][0]);
 		}
 		scene.addChild(player);

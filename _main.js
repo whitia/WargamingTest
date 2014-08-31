@@ -609,21 +609,21 @@ window.onload = function() {
 										game.assets["sound/attack.wav"].volume = 0.3;
 										game.assets["sound/attack.wav"].play();
 									} else if (this.frame == this.vFrame + 30) {
-										// fieldScene.removeChild(isAttackBase);
-										// fieldScene.removeChild(isAttackBelt);
-										// fieldScene.removeChild(enemyAvatar);
-										// fieldScene.removeChild(playerAvatar);
-										// // 行動中の敵を待機状態にする
-										// enemy[i].phase = "Wait";
-										// // 行動待ちの敵がいる場合、次の敵を行動可能にする
-										// if (enemy.length != i + 1) {
-										// 	enemy[i].finalize();
-										// 	enemy[i + 1].phase = "Move";
-										// } else {
-										// 	// 敵フェーズ終了
-										// 	enemy[i].finalize();
-										// 	game.phase = "Player";
-										// }
+										fieldScene.removeChild(isAttackBase);
+										fieldScene.removeChild(isAttackBelt);
+										fieldScene.removeChild(enemyAvatar);
+										fieldScene.removeChild(playerAvatar);
+										// 行動中の敵を待機状態にする
+										enemy[i].phase = "Wait";
+										// 行動待ちの敵がいる場合、次の敵を行動可能にする
+										if (enemy.length != i + 1) {
+											enemy[i].finalize();
+											enemy[i + 1].phase = "Move";
+										} else {
+											// 敵フェーズ終了
+											enemy[i].finalize();
+											game.phase = "Player";
+										}
 									}
 								} else {
 									// 攻撃モーション準備
