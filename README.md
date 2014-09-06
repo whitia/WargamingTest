@@ -17,6 +17,8 @@
 [【Ｒド】](http://www.geocities.co.jp/Milano-Cat/3319/)  
 [白螺子屋](http://hi79.web.fc2.com/)  
 [ぴぽや倉庫](http://piposozai.wiki.fc2.com/)  
+[Game Studio Rxus.](http://rxus.digiweb.jp/)  
+[wahr schichsal](http://xxwahrschicksalxx.web.fc2.com/top.html)
 参考サイト
 ----------
 **≪enchant.js≫**  
