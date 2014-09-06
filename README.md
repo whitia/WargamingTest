@@ -1,5 +1,5 @@
 更新履歴
-=================
+--------
 (2014.08.31)
 <ul>
 <li>移動範囲設定アルゴリズム修正</li>
@@ -13,18 +13,19 @@
 <li>新規作成</li>
 </ul>
 使用素材
-=================
+--------
 ≪グラフィック≫<br>
 　●すきまの素材	http://wato5576.sukimakaze.com/<br>
 　●【Ｒド】		http://www.geocities.co.jp/Milano-Cat/3319/<br>
 　●白螺子屋		http://hi79.web.fc2.com/<br>
 参考サイト
-=================
+----------
 ≪enchant.js≫<br>
 　http://blog.livedoor.jp/kamikaze_cyclone/archives/33044647.html<br>
 　http://tmlife.net/programming/javascript/enchant-js-100-tips.html<br>
 　http://www.ideaxidea.com/?s=enchant&x=0&y=0<br>
 　http://wise9.jp/archives/7060<br>
+　http://www.openspc2.org/reibun/enchant.js/v0.4.3/<br>
 <br>
 ≪アルゴリズム≫<br>
 　http://gumina.sakura.ne.jp/CREATION/OLD/MAKING/<br>
