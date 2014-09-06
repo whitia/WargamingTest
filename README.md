@@ -16,6 +16,7 @@
 [すきまの素材](http://wato5576.sukimakaze.com/)  
 [【Ｒド】](http://www.geocities.co.jp/Milano-Cat/3319/)  
 [白螺子屋](http://hi79.web.fc2.com/)  
+[ぴぽや倉庫](http://piposozai.wiki.fc2.com/)  
 参考サイト
 ----------
 **≪enchant.js≫**  
