@@ -4,24 +4,198 @@
 
 enchant();
 
-/**
- * ９方向の相対座標と対応する向き
- * [x, y, direction]
- * direction = 0:down, 1:left, 2:right, 3:up, -1:none
- */
-var around = [
-	[-32, -32, -1], [  0, -32,  3], [ 32, -32, -1],
-	[-32,   0,  1], [  0,   0, -1], [ 32,   0,  2],
-	[-32,  32, -1], [  0,  32,  0], [ 32,  32, -1]
-];
+// 定数
+var PIECE  = 32;
+var SQUARE = 32;
+var AROUND = {
+	TOP:    { X:  0, Y:-32 },
+	LEFT:   { X:-32, Y:  0 },
+	RIGHT:  { X: 32, Y:  0 },
+	BOTTOM: { X:  0, Y: 32 }
+};
 
+// 共通変数
+var SET_TIME     = Date.now();
+
+var PLAYERS      = new Group();
+var ENEMIES      = new Group();
+var MOVE_SCOPE   = new Array();
+var ATTACK_SCOPE = new Array();
+
+// 共通メソッド
+function SetMoveScope(rx, ry, steps, direction) {
+	// 移動歩数が尽きたら終了
+	if (steps < 0) return;
+
+	var x = rx + AROUND[direction].X;
+	var y = ry + AROUND[direction].Y;
+
+	// 敵との接触判定
+	var isEnemy = true;
+	for (var i = 0; i < enemy.length; i++) {
+		if (x == enemy[i].x && y == enemy[i].y) {
+			isEnemy = false;
+		}
+	}
+
+	// マップ／敵／画面外
+	if (baseMap.hitTest(x, y) || !isEnemy
+		|| !(0 <= x && x < baseMap.width)
+		|| !(0 <= y && y < baseMap.height)) {
+		return;
+	}
+
+	for (var i = 0; i < MOVE_SCOPE.length; i++) {
+		// 既に同じ座標に移動範囲が設定されているか
+		if (x == MOVE_SCOPE[i].x && y == MOVE_SCOPE[i].y) {
+			// 今回の移動歩数が前回以上か
+			if (steps >= moveScopeStep[i]) {
+				// 配列から削除
+				MOVE_SCOPE.splice(i, 1);
+				moveScopeStep.splice(i, 1);
+			} else {
+				// 何もせず終了
+				return;
+			}
+		}
+	}
+
+	// 移動範囲をグループに追加
+	MOVE_SCOPE.push(new Scope(x, y, "Move"));
+	moveScopeStep.push(steps);
+
+	// 移動範囲を伸ばす（再帰呼び出し）
+	if (direction != "BOTTOM") arguments.callee(x, y, steps - 1, "TOP");
+	if (direction != "RIGHT") arguments.callee(x, y, steps - 1, "LEFT");
+	if (direction != "LEFT") arguments.callee(x, y, steps - 1, "RIGHT");
+	if (direction != "TOP") arguments.callee(x, y, steps - 1, "BOTTOM");
+}
+
+function CallSetMoveScope(rx, ry, steps) {
+	// 配列を初期化
+	MOVE_SCOPE = new Array();
+	moveScopeStep = new Array();
+
+	// 現在位置の移動範囲を配列に追加
+	MOVE_SCOPE.push(new Scope(rx, ry, "Move"));
+	moveScopeStep.push(steps);
+
+	// 移動歩数分の移動範囲を設定する
+	SetMoveScope(rx, ry, steps - 1, "TOP");
+	SetMoveScope(rx, ry, steps - 1, "LEFT");
+	SetMoveScope(rx, ry, steps - 1, "RIGHT");
+	SetMoveScope(rx, ry, steps - 1, "BOTTOM");
+
+	// 移動範囲を表示
+	scene.removeChild(PLAYERS);
+	scene.removeChild(ENEMIES);
+
+	for (var i = 0; i < MOVE_SCOPE.length; i++) {
+		scene.addChild(MOVE_SCOPE[i]);
+	}
+
+	scene.addChild(PLAYERS);
+	scene.addChild(ENEMIES);
+}
+
+function DelMoveScope() {
+	for (var i = 0; i < MOVE_SCOPE.length; i++) {
+		scene.removeChild(MOVE_SCOPE[i]);
+	}
+}
+
+function SetAttackScope(rx, ry) {
+	// 配列を初期化
+	ATTACK_SCOPE = new Array();
+
+	// 攻撃範囲を配列に追加
+	ATTACK_SCOPE.push(new Scope(rx + AROUND["TOP"].X, ry + AROUND["TOP"].Y, "Attack"));
+	ATTACK_SCOPE.push(new Scope(rx + AROUND["LEFT"].X, ry + AROUND["LEFT"].Y, "Attack"));
+	ATTACK_SCOPE.push(new Scope(rx + AROUND["RIGHT"].X, ry + AROUND["RIGHT"].Y, "Attack"));
+	ATTACK_SCOPE.push(new Scope(rx + AROUND["BOTTOM"].X, ry + AROUND["BOTTOM"].Y, "Attack"));
+
+	// 攻撃範囲を表示
+	scene.removeChild(PLAYERS);
+	scene.removeChild(ENEMIES);
+
+	for (var i = 0; i < ATTACK_SCOPE.length; i++) {
+		scene.addChild(ATTACK_SCOPE[i]);
+	}
+
+	scene.addChild(PLAYERS);
+	scene.addChild(ENEMIES);
+}
+
+function DelAttackScope() {
+	for (var i = 0; i < ATTACK_SCOPE.length; i++) {
+		scene.removeChild(ATTACK_SCOPE[i]);
+	}
+	cursor.x = cursor.y = -32;
+	scene.removeChild(cursor);
+}
+
+function ScoutingSearch(self) {
+	for (var i = 0; i < MOVE_SCOPE.length; i++) {
+		for (var direction in AROUND) {
+			// 移動範囲＋攻撃範囲
+			var x = MOVE_SCOPE[i].x + AROUND[direction].X;
+			var y = MOVE_SCOPE[i].y + AROUND[direction].Y;
+			if (x == player.x && y == player.y) {
+				return { X:MOVE_SCOPE[i].x, Y:MOVE_SCOPE[i].y };
+			}
+		}
+	}
+	return null;
+}
+
+function SetBattleScene() {
+	// 戦闘シーン
+	battleScene = new Scene();
+	battleScene.backgroundColor = "rgba(0, 0, 0, 0.7)";
+
+	// 戦闘シーン枠
+	battleBG = new Sprite(320, 120);
+	battleBG.moveTo(0, 100);
+	battleBG.image = game.assets["img/battleBG.png"];
+	battleScene.addChild(battleBG);
+
+	// プレイヤーアバター
+	playerAvatar = new Avatar("1:1:1:2002:2110:2211");
+	playerAvatar.left();
+	playerAvatar.moveTo(210, 130);
+	battleScene.addChild(playerAvatar);
+
+	// 敵アバター
+	enemyAvatar = new Sprite(48, 48);
+	enemyAvatar.moveTo(50, 135);
+	enemyAvatar.image = game.assets["img/mon_192.gif"];
+	battleScene.addChild(enemyAvatar);
+
+	// 攻撃エフェクト（斬撃）
+	slash = new Sprite(120, 120);
+	slash.image = game.assets["img/effect00.png"];
+	slash.x = enemyAvatar.x - 30;
+	slash.y = enemyAvatar.y - 40;
+	slash.frame = [0, 1, 2, 3, 4, 5, 6, 7, 8, null];
+
+	// 攻撃エフェクト（毒液）
+	venom = new Sprite(120, 120);
+	venom.image = game.assets["img/effect01.png"];
+	venom.x = playerAvatar.x - 30;
+	venom.y = playerAvatar.y - 40;
+	venom.frame = [0, 1, 2, 3, 4, 5, 6, 7, 8, null];
+
+	game.pushScene(battleScene);
+}
+
+// クラス
 var Player = Class.create(Sprite, {
 	initialize: function(x, y) {
-		Sprite.call(this, 32, 32);
+		Sprite.call(this, PIECE, PIECE);
 
 		this.image = game.assets["img/chara5.png"];
-		this.x = x * 32;
-		this.y = y * 32;
+		this.x = x * SQUARE;
+		this.y = y * SQUARE;
 		this.walk = 1;
 		this.direction = 0;
 		this.steps = 3;
@@ -30,9 +204,9 @@ var Player = Class.create(Sprite, {
 		this.isMoving = false;
 		this.isAttack = false;
 		this.phase = "Move";
-		this.moveScope = new Array();
-		this.attackScope = new Array();
-		scene.addChild(this);
+
+		PLAYERS.addChild(this);
+		scene.addChild(PLAYERS);
 	},
 	onenterframe: function() {
 		this.frame = this.direction * 3 + this.walk;
@@ -42,119 +216,46 @@ var Player = Class.create(Sprite, {
 			this.walk %= 3;
 		}
 	},
-	setScope: function(rx, ry, direction, steps) {
-		// 移動歩数が尽きたら終了
-		if (steps < 0) return;
-
-		var x = rx + around[direction][0];
-		var y = ry + around[direction][1];
-
-		// 敵との接触判定
-		var isEnemy = true;
-		for (var j = 0; j < enemy.length; j++) {
-			if (x == enemy[j].x && y == enemy[j].y) {
-				isEnemy = false;
-			}
-		}
-		// マップ／敵／画面外
-		if (baseMap.hitTest(x, y) || !isEnemy
-			|| !(0 <= x && x < baseMap.width)
-			|| !(0 <= y && y < baseMap.height)) {
-			return;
-		}
-
-		for (var i = 0; i < player.moveScope.length; i++) {
-			if (x == player.moveScope[i][0].x && y == player.moveScope[i][0].y) {
-				if (steps >= player.moveScope[i][1]) {
-					player.moveScope.splice(i, 1);
-				} else {
-					return;
-				}
-			}
-		}
-
-		player.moveScope[player.moveScope.length] = [new Scope(x, y, "Move"), steps];
-
-		// 移動範囲を伸ばす
-		if (direction != 7) this.setScope(x, y, 1, steps - 1);
-		if (direction != 5) this.setScope(x, y, 3, steps - 1);
-		if (direction != 3) this.setScope(x, y, 5, steps - 1);
-		if (direction != 1) this.setScope(x, y, 7, steps - 1);
-	},
-	setMoveScope: function() {
-		this.moveScope.length = 0;
-
-		// 中心位置のみ移動範囲を設定する
-		this.moveScope[this.moveScope.length] = [new Scope(this.x, this.y, "Move"), player.steps];
-
-		// 移動歩数分の移動範囲を設定する（暫定コード）
-		this.setScope(this.x, this.y, 1, this.steps - 1);
-		this.setScope(this.x, this.y, 3, this.steps - 1);
-		this.setScope(this.x, this.y, 5, this.steps - 1);
-		this.setScope(this.x, this.y, 7, this.steps - 1);
-
-		scene.removeChild(player);
-		for (var i = 0; i < enemy.length; i++) {
-			scene.removeChild(enemy[i]);
-		}
-		for (var i = 0; i < player.moveScope.length; i++) {
-			scene.addChild(player.moveScope[i][0]);
-		}
-		scene.addChild(player);
-		for (var i = 0; i < enemy.length; i++) {
-			scene.addChild(enemy[i]);
+	phaseStart: function() {
+		if (Date.now() > SET_TIME && Date.now() < SET_TIME + 500) {
+			phaseTitleBG.opacity = 1;
+			phaseTitleBG.backgroundColor = "#009";
+			scene.addChild(phaseTitleBG);
+			phaseTitle.opacity = 1;
+			phaseTitle.moveTo(70, 160);
+			phaseTitle.setText("PLAYER PHASE");
+			scene.addChild(phaseTitle);
+		} else if (Date.now() > SET_TIME + 500 && Date.now() < SET_TIME + 1000) {
+			phaseTitleBG.opacity -= 0.05;
+			phaseTitle.opacity -= 0.05;
+		} else if (Date.now() > SET_TIME + 1000) {
+			scene.removeChild(phaseTitleBG);
+			scene.removeChild(phaseTitle);
+			CallSetMoveScope(this.x, this.y, this.steps);
+			this.start = true;
 		}
 	},
-	delMoveScope: function() {
-		for (var i = 0; i < this.moveScope.length; i++) {
-			scene.removeChild(this.moveScope[i][0]);
-		}
-	},
-	setAttackScope: function() {
-		this.attackScope.length = 0;
-
-		for (var i = 1; i < around.length; i = i + 2) {
-			// 対象を中心とした４方向の絶対座標
-			var x = this.x + around[i][0];
-			var y = this.y + around[i][1];
-
-			this.attackScope[this.attackScope.length] = new Scope(x, y, "Attack");
-		}
-		for (var i = 0; i < enemy.length; i++) {
-			scene.removeChild(enemy[i]);
-		}
-		scene.addChild(player.attackScope[0]);
-		scene.addChild(player.attackScope[1]);
-		scene.addChild(player.attackScope[2]);
-		scene.addChild(player.attackScope[3]);
-		for (var i = 0; i < enemy.length; i++) {
-			scene.addChild(enemy[i]);
-		}
-	},
-	delAttackScope: function() {
-		for (var i = 0; i < this.attackScope.length; i++) {
-			scene.removeChild(this.attackScope[i]);
-		}
-	},
-	finalize: function() {
+	phaseEnd: function() {
+		DelMoveScope();
+		DelAttackScope();
 		this.start = false;
+		this.isMoving = false;
 		this.isAttack = false;
-		this.delMoveScope();
-		this.delAttackScope();
-		this.moveScope.length = 0;
 		this.phase = "Move";
 		enemy[0].phase = "Move";
 		game.phase = "Enemy";
+
+		SET_TIME = Date.now();
 	}
 });
 
 var Enemy = Class.create(Sprite, {
 	initialize: function(x, y) {
-		Sprite.call(this, 32, 32);
+		Sprite.call(this, PIECE, PIECE);
 
 		this.image = game.assets["img/chara6.png"];
-		this.x = x * 32;
-		this.y = y * 32;
+		this.x = x * SQUARE;
+		this.y = y * SQUARE;
 		this.walk = 1;
 		this.direction = 0;
 		this.steps = 3;
@@ -163,10 +264,10 @@ var Enemy = Class.create(Sprite, {
 		this.isMoving = false;
 		this.isAttack = false;
 		this.phase = "Wait";
-		this.moveScope = new Array();
-		this.attackScope = new Array();
 		this.distance = 1024;
-		scene.addChild(this);
+
+		ENEMIES.addChild(this);
+		scene.addChild(ENEMIES);
 	},
 	onenterframe: function() {
 		this.frame = this.direction * 3 + this.walk;
@@ -176,85 +277,44 @@ var Enemy = Class.create(Sprite, {
 			this.walk %= 3;
 		}
 	},
-	setScope: function(rx, ry, direction, steps) {
-		// 移動歩数が尽きたら終了
-		if (steps - 1 < 0) return;
-
-		var x = rx + around[direction][0];
-		var y = ry + around[direction][1];
-
-		// 敵との接触判定
-		var isEnemy = true;
-		for (var j = 0; j < enemy.length; j++) {
-			if (x == enemy[j].x && y == enemy[j].y) {
-				isEnemy = false;
-			}
-		}
-
-		if (baseMap.hitTest(x, y) || !isEnemy
-			|| (x == player.x && y == player.y)
-			|| !(0 <= x && x < baseMap.width)
-			|| !(0 <= y && y < baseMap.height)) {
-			return;
-		}
-
-		// 移動範囲が設定済みなら終了
-		for (var i = 0; i < this.moveScope.length; i++) {
-			if (x == this.moveScope[i].x && y == this.moveScope[i].y) return;
-		}
-
-		this.moveScope[this.moveScope.length] = new Scope(x, y, "Move");
-		num = new Label(steps)
-		// num = new Label(this.moveScope.length);
-		// num = new Label(this.moveScope[this.moveScope.length - 1].x/32+","+this.moveScope[this.moveScope.length - 1].y/32);
-		// num.font = "10px"
-		num.x = x; num.y = y;
-		// scene.addChild(num);
-
-		// 移動範囲を伸ばす
-		if (direction != 7) this.setScope(x, y, 1, steps - 1);
-		if (direction != 5) this.setScope(x, y, 3, steps - 1);
-		if (direction != 3) this.setScope(x, y, 5, steps - 1);
-		if (direction != 1) this.setScope(x, y, 7, steps - 1);
-	},
-	setMoveScope: function() {
-		this.moveScope.length = 0;
-
-		// 中心位置のみ移動範囲を設定する
-		this.moveScope[this.moveScope.length] = new Scope(this.x, this.y, "Move");
-
-		// 移動歩数分の移動範囲を設定する（暫定コード）
-		this.setScope(this.x, this.y, 1, this.steps);
-		this.setScope(this.x-32, this.y, 3, this.steps-1);
-		this.setScope(this.x+32, this.y, 5, this.steps-1);
-		this.setScope(this.x, this.y, 7, this.steps);
-	},
-	delMoveScope: function() {
-		for (var i = 0; i < this.moveScope.length; i++) {
-			scene.removeChild(this.moveScope[i]);
+	phaseStart: function() {
+		if (Date.now() > SET_TIME && Date.now() < SET_TIME + 500) {
+			phaseTitleBG.opacity = 1;
+			phaseTitleBG.backgroundColor = "#900";
+			scene.addChild(phaseTitleBG);
+			phaseTitle.opacity = 1;
+			phaseTitle.moveTo(80, 160);
+			phaseTitle.setText("ENEMY PHASE");
+			scene.addChild(phaseTitle);
+		} else if (Date.now() > SET_TIME + 500 && Date.now() < SET_TIME + 1000) {
+			phaseTitleBG.opacity -= 0.05;
+			phaseTitle.opacity -= 0.05;
+		} else if (Date.now() > SET_TIME + 1000) {
+			scene.removeChild(phaseTitleBG);
+			scene.removeChild(phaseTitle);
+			CallSetMoveScope(this.x, this.y, this.steps);
+			this.start = true;
 		}
 	},
-	setAttackScope: function() {
-		this.attackScope.length = 0;
+	phaseEnd: function(index) {
+		DelMoveScope();
+		this.start = false;
+		this.isAttack = false;
 
-		for (var i = 1; i < around.length; i = i + 2) {
-			// 対象を中心とした４方向の絶対座標
-			var x = this.x + around[i][0];
-			var y = this.y + around[i][1];
+		// まだ行動していない敵がいるか
+		if (enemy.length != index + 1) {
+			enemy[index + 1].phase = "Move";
+		} else {
+			game.phase = "Player";
+		}
 
-			this.attackScope[this.attackScope.length] = new Scope(x, y, "Attack");
-		}
-	},
-	delAttackScope: function() {
-		for (var i = 0; i < this.attackScope.length; i++) {
-			scene.removeChild(this.attackScope[i]);
-		}
+		SET_TIME = Date.now();
 	}
 });
 
 var Cursor = Class.create(Sprite, {
 	initialize: function() {
-		Sprite.call(this, 32, 32);
+		Sprite.call(this, PIECE, PIECE);
 
 		this.image = game.assets["img/cur001.png"];
 	},
@@ -267,9 +327,9 @@ var Cursor = Class.create(Sprite, {
 			}
 		}
 	},
-	setPoint: function(x, y) {
-		this.x = x;
-		this.y = y;
+	setCursor: function(direction) {
+		this.x = player.x + AROUND[direction].X;
+		this.y = player.y + AROUND[direction].Y;
 	}
 });
 
@@ -277,8 +337,8 @@ var Scope = Class.create(Entity, {
 	initialize: function(x, y, type) {
 		Entity.call(this);
 
-		this.width = 32;
-		this.height = 32;
+		this.width = SQUARE;
+		this.height = SQUARE;
 		this.x = x;
 		this.y = y;
 		this.opacity = 0.3;
@@ -293,11 +353,12 @@ var Scope = Class.create(Entity, {
 	}
 });
 
+// メイン
 window.onload = function() {
 	// ゲーム全体の設定
-	game = new Game(320, 320);
+	game = new Game(SQUARE * 10, SQUARE * 10);
 	game.fps = 30;
-	game.preload("img/chara5.png", "img/chara6.png", "img/cur001.png", "img/map1.png", "sound/slash.wav", "sound/attack.wav", "img/mon_192.gif");
+	game.preload("img/chara5.png", "img/chara6.png", "img/cur001.png", "img/map1.png", "sound/slash.wav", "sound/venom.ogg", "img/mon_192.gif", "img/effect00.png", "img/effect01.png", "img/battleBG.png");
 	game.keybind(88, 'x');
 	game.keybind(90, 'z');
 	game.phase = "Player";
@@ -390,6 +451,14 @@ window.onload = function() {
 		// カーソル
 		cursor = new Cursor();
 
+		// フェーズタイトル
+		phaseTitle = new MutableText(0, 0);
+		phaseTitleBG = new Entity();
+		phaseTitleBG.width = 320;
+		phaseTitleBG.height = 12;
+		phaseTitleBG.x = 0;
+		phaseTitleBG.y = 160;
+
 		// キャプション
 		notes1 = new Label("方向キー：移動・選択");
 		notes1.color = "#fff";
@@ -409,38 +478,12 @@ window.onload = function() {
 		notes3.moveTo(0, 20);
 		scene.addChild(notes3);
 
-		// プレイヤーアバター
-		playerAvatar = new Avatar("1:1:1:2002:2110:2211");
-		playerAvatar.left();
-		playerAvatar.moveTo(180, 100);
-
-		// 敵アバター
-		enemyAvatar = new Sprite(48, 48);
-		enemyAvatar.moveTo(80, 105);
-		enemyAvatar.image = game.assets["img/mon_192.gif"];
-
-		// 攻撃モーション中の背景（全体）
-		isAttackBase = new Entity();
-		isAttackBase.width = 320;
-		isAttackBase.height = 320;
-		isAttackBase.opacity = 0.7;
-		isAttackBase.backgroundColor = "#000";
-
-		// 攻撃モーション中の背景（帯）
-		isAttackBelt = new Entity();
-		isAttackBelt.width = 320;
-		isAttackBelt.height = 70;
-		isAttackBelt.opacity = 0.7;
-		isAttackBelt.moveTo(0, 90);
-		isAttackBelt.backgroundColor = "#9c0";
-
 		// フレーム毎のイベント処理
 		game.addEventListener("enterframe", function() {
 			// プレイヤーフェーズ
 			if (this.phase == "Player") {
 				if (!player.start) {
-					player.setMoveScope();
-					player.start = true;
+					player.phaseStart();
 				} else {
 					// 移動フェーズ
 					if (player.phase == "Move") {
@@ -450,7 +493,8 @@ window.onload = function() {
 							player.moveBy(player.vx, player.vy);
 
 							// X軸方向かY軸方向に１マス進んだら移動終了
-							if ((player.vx && (player.x % 32) == 0) || (player.vy && (player.y % 32) == 0)) {
+							if ((player.vx && (player.x % SQUARE) == 0)
+								|| (player.vy && (player.y % SQUARE) == 0)) {
 								player.isMoving = false;
 							}
 						} else {
@@ -470,22 +514,22 @@ window.onload = function() {
 								player.vy = -4;
 							// 移動フェーズ終了
 							} else if (this.input.z) {
-								player.delMoveScope();
-								player.setAttackScope();
+								DelMoveScope();
+								SetAttackScope(player.x, player.y);
 								player.phase = "Attack";
 							// プレイヤーフェーズ終了
 							} else if (this.input.x) {
-								player.finalize();
+								player.phaseEnd();
 							}
 
 							// 方向キーが入力されたか
 							if (player.vx || player.vy) {
 								// 進む先の座標
-								var x = player.x + (player.vx ? player.vx / Math.abs(player.vx) * 32 : 0);
-								var y = player.y + (player.vy ? player.vy / Math.abs(player.vy) * 32 : 0);
+								var x = player.x + (player.vx ? player.vx / Math.abs(player.vx) * SQUARE : 0);
+								var y = player.y + (player.vy ? player.vy / Math.abs(player.vy) * SQUARE : 0);
 								// 移動可能か
-								for (var i = 0; i < player.moveScope.length; i++) {
-									if (x == player.moveScope[i][0].x && y == player.moveScope[i][0].y) {
+								for (var i = 0; i < MOVE_SCOPE.length; i++) {
+									if (x == MOVE_SCOPE[i].x && y == MOVE_SCOPE[i].y) {
 										player.isMoving = true;
 									}
 								}
@@ -495,52 +539,37 @@ window.onload = function() {
 					} else if (player.phase == "Attack") {
 						// 攻撃モーション中か
 						if (player.isAttack) {
-							// 攻撃モーションに入ってからの経過フレームでエフェクトを順番に実行
-							if (this.vFrame + 5 == this.frame) {
-								playerAvatar.action = "attack";
-							} else if (this.frame == this.vFrame + 25) {
-								game.assets["sound/slash.wav"].volume = 0.3;
-								game.assets["sound/slash.wav"].play();
-								enemyAvatar.opacity = 0;
-							} else if (this.frame == this.vFrame + 30) {
-								enemyAvatar.opacity = 1;
-								playerAvatar.action = "stop";
-							} else if (this.frame == this.vFrame + 40) {
-								scene.removeChild(isAttackBase);
-								scene.removeChild(isAttackBelt);
-								scene.removeChild(enemyAvatar);
-								scene.removeChild(playerAvatar);
-								// 攻撃フェーズ終了
-								player.finalize();
+							var slashSE = game.assets['sound/slash.wav'];
+							if (Date.now() > SET_TIME + 500 && Date.now() < SET_TIME + 1000) {
+								slashSE.play();
+								battleScene.addChild(slash);
+							} else if (Date.now() > SET_TIME + 1500) {
+								this.popScene(battleScene);
+								player.phaseEnd();
 							}
+							if (slashSE.currentTime > 0.5) slashSE.stop();
 						} else {
 							// 方向キー入力待ち
 							if (this.input.down) {
-								cursor.setPoint(player.x, player.y + 32);
+								cursor.setCursor("BOTTOM");
 								scene.addChild(cursor);
 							} else if (this.input.left) {
-								cursor.setPoint(player.x - 32, player.y);
+								cursor.setCursor("LEFT");
 								scene.addChild(cursor);
 							} else if (this.input.right) {
-								cursor.setPoint(player.x + 32, player.y);
+								cursor.setCursor("RIGHT");
 								scene.addChild(cursor);
 							} else if (this.input.up) {
-								cursor.setPoint(player.x, player.y - 32);
+								cursor.setCursor("TOP");
 								scene.addChild(cursor);
 							// Zキー入力待ち
 							} else if (this.input.z) {
 								for (var i = 0; i < enemy.length; i++) {
 									if (cursor.x == enemy[i].x && cursor.y == enemy[i].y) {
 										// 攻撃範囲の表示をリセット
-										scene.removeChild(cursor);
-										// 攻撃モーション準備
-										scene.addChild(isAttackBase);
-										scene.addChild(isAttackBelt);
-										scene.addChild(enemyAvatar);
-										scene.addChild(playerAvatar);
-										// 現在のフレームを取得
-										this.vFrame = this.frame;
 										player.isAttack = true;
+										SetBattleScene();
+										SET_TIME = Date.now();
 									}
 								}
 							// Xキー入力待ち
@@ -548,8 +577,8 @@ window.onload = function() {
 								// 攻撃範囲の表示をリセット
 								scene.removeChild(cursor);
 								// 攻撃フェーズ終了
-								player.delAttackScope();
-								player.setMoveScope();
+								DelAttackScope();
+								CallSetMoveScope(player.x, player.y, player.steps);
 								player.phase = "Move";
 							}
 						}
@@ -562,8 +591,7 @@ window.onload = function() {
 					if (enemy[i].phase != "Wait") {
 						// フェーズ開始時
 						if (!enemy[i].start) {
-							enemy[i].setMoveScope();
-							enemy[i].start = true;
+							enemy[i].phaseStart();
 						} else {
 							// 移動フェーズ
 							if (enemy[i].phase == "Move") {
@@ -572,38 +600,28 @@ window.onload = function() {
 									// 移動
 									enemy[i].moveBy(enemy[i].vx, enemy[i].vy);
 
-									if (enemy[i].x == enemy[i].moveScope[tmp].x && enemy[i].y == enemy[i].moveScope[tmp].y) {
-										enemy[i].isMoving = false;
-										enemy[i].phase = "Attack";
-									}
 								} else {
-									for (var j = 0; j < enemy[i].moveScope.length; j++) {
-										if (enemy[i].distance > Math.abs(enemy[i].moveScope[j].x - player.x) + Math.abs(enemy[i].moveScope[j].y - player.y)) {
-											enemy[i].distance = Math.abs(enemy[i].moveScope[j].x - player.x) + Math.abs(enemy[i].moveScope[j].y - player.y);
-											tmp = j;
-										}
+									if (destination = ScoutingSearch(enemy[i])) {
+										enemy[i].moveTo(destination.X, destination.Y);
+									enemy[i].isMoving = false;
+									enemy[i].phase = "Attack";
+									SetBattleScene();
+									SET_TIME = Date.now();
+									} else {
+										enemy[i].phaseEnd(i);
 									}
-									// 移動先座標と現在座標の差
-									enemy[i].vx = (enemy[i].moveScope[tmp].x - enemy[i].x);
-									enemy[i].vy = (enemy[i].moveScope[tmp].y - enemy[i].y);
-									enemy[i].vx = enemy[i].vx ? (enemy[i].vx / Math.abs(enemy[i].vx)) * 4 : 0;
-									enemy[i].vy = enemy[i].vy ? (enemy[i].vy / Math.abs(enemy[i].vy)) * 4 : 0;
-									enemy[i].isMoving = true;
 								}
 							// 攻撃フェーズ
 							} else if (enemy[i].phase == "Attack") {
-								if (BeAround(enemy[i].x, enemy[i].y)) {
-									game.assets["sound/attack.wav"].volume = 0.3;
-									game.assets["sound/attack.wav"].play();
+								var venomSE = game.assets['sound/venom.ogg'];
+								if (Date.now() > SET_TIME + 500 && Date.now() < SET_TIME + 1000) {
+									venomSE.play();
+									battleScene.addChild(venom);
+								} else if (Date.now() > SET_TIME + 1500) {
+									this.popScene(battleScene);
+									enemy[i].phaseEnd(i);
 								}
-								enemy[i].delMoveScope();
-								enemy[i].start = false;
-								enemy[i].isAttack = false;
-								if (enemy.length != i + 1) {
-									enemy[i + 1].phase = "Move";
-								} else {
-									this.phase = "Player";
-								}
+								if (venomSE.currentTime > 1) venomSE.stop();
 							}
 						}
 					}
@@ -612,20 +630,4 @@ window.onload = function() {
 		});
 	}
 	game.start();
-}
-
-function BeAround(rx, ry) {
-	var result = false;
-
-	for (var i = 1; i < around.length; i = i + 2) {
-		// 対象を中心とした４方向の絶対座標
-		var x = rx + around[i][0];
-		var y = ry + around[i][1];
-
-		if (x == player.x && y == player.y) {
-			result = true;
-		}
-	}
-
-	return result;
 }
