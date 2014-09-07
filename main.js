@@ -63,6 +63,7 @@ function SetMoveScope(rx, ry, steps, direction) {
 	// 移動範囲をグループに追加
 	MOVE_SCOPE.push(new Scope(x, y, "Move"));
 	moveScopeStep.push(steps);
+	// ここで移動経路を格納する処理
 
 	// 移動範囲を伸ばす（再帰呼び出し）
 	if (direction != "BOTTOM") arguments.callee(x, y, steps - 1, "TOP");
