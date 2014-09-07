@@ -134,7 +134,7 @@ function DelAttackScope() {
 	scene.removeChild(cursor);
 }
 
-function ScoutingSearch(self) {
+function ScoutingSearch() {
 	for (var i = 0; i < MOVE_SCOPE.length; i++) {
 		for (var direction in AROUND) {
 			// 移動範囲＋攻撃範囲
@@ -153,7 +153,7 @@ function SetBattleScene() {
 	battleScene = new Scene();
 	battleScene.backgroundColor = "rgba(0, 0, 0, 0.7)";
 
-	// 戦闘シーン枠
+	// 戦闘シーン背景
 	battleBG = new Sprite(320, 120);
 	battleBG.moveTo(0, 100);
 	battleBG.image = game.assets["img/battleBG.png"];
@@ -165,11 +165,25 @@ function SetBattleScene() {
 	playerAvatar.moveTo(210, 130);
 	battleScene.addChild(playerAvatar);
 
+	// プレイヤーライフバー
+	playerLifeBar = new Bar(210, 110);
+	playerLifeBar.image = game.assets["img/bar.png"];
+	playerLifeBar.maxvalue = 80;
+	playerLifeBar.value = playerLifeBar.maxvalue;
+	battleScene.addChild(playerLifeBar);
+
 	// 敵アバター
 	enemyAvatar = new Sprite(48, 48);
 	enemyAvatar.moveTo(50, 135);
 	enemyAvatar.image = game.assets["img/mon_192.gif"];
 	battleScene.addChild(enemyAvatar);
+
+	// 敵ライフバー
+	enemyLifeBar = new Bar(40, 110);
+	enemyLifeBar.image = game.assets["img/bar.png"];
+	enemyLifeBar.maxvalue = 80;
+	enemyLifeBar.value = enemyLifeBar.maxvalue;
+	battleScene.addChild(enemyLifeBar);
 
 	// 攻撃エフェクト（斬撃）
 	slash = new Sprite(120, 120);
@@ -184,8 +198,6 @@ function SetBattleScene() {
 	venom.x = playerAvatar.x - 30;
 	venom.y = playerAvatar.y - 40;
 	venom.frame = [0, 1, 2, 3, 4, 5, 6, 7, 8, null];
-
-	game.pushScene(battleScene);
 }
 
 // クラス
@@ -264,7 +276,6 @@ var Enemy = Class.create(Sprite, {
 		this.isMoving = false;
 		this.isAttack = false;
 		this.phase = "Wait";
-		this.distance = 1024;
 
 		ENEMIES.addChild(this);
 		scene.addChild(ENEMIES);
@@ -358,13 +369,27 @@ window.onload = function() {
 	// ゲーム全体の設定
 	game = new Game(SQUARE * 10, SQUARE * 10);
 	game.fps = 30;
-	game.preload("img/chara5.png", "img/chara6.png", "img/cur001.png", "img/map1.png", "sound/slash.wav", "sound/venom.ogg", "img/mon_192.gif", "img/effect00.png", "img/effect01.png", "img/battleBG.png");
+	game.preload(
+		"img/chara5.png",
+		"img/chara6.png",
+		"img/cur001.png",
+		"img/map1.png",
+		"sound/slash.wav",
+		"sound/venom.ogg",
+		"img/mon_192.gif",
+		"img/effect00.png",
+		"img/effect01.png",
+		"img/battleBG.png",
+		"img/bar.png",
+		"sound/co.wav"
+	);
 	game.keybind(88, 'x');
 	game.keybind(90, 'z');
 	game.phase = "Player";
 
 	game.onload = function() {
 		scene = game.rootScene;
+		SetBattleScene();
 
 		// マップ
 		baseMap = new Map(16, 16);
@@ -491,7 +516,6 @@ window.onload = function() {
 						if (player.isMoving) {
 							// 移動
 							player.moveBy(player.vx, player.vy);
-
 							// X軸方向かY軸方向に１マス進んだら移動終了
 							if ((player.vx && (player.x % SQUARE) == 0)
 								|| (player.vy && (player.y % SQUARE) == 0)) {
@@ -540,10 +564,17 @@ window.onload = function() {
 						// 攻撃モーション中か
 						if (player.isAttack) {
 							var slashSE = game.assets['sound/slash.wav'];
-							if (Date.now() > SET_TIME + 500 && Date.now() < SET_TIME + 1000) {
+							if (Date.now() > SET_TIME + 1000 && Date.now() < SET_TIME + 1500) {
 								slashSE.play();
 								battleScene.addChild(slash);
-							} else if (Date.now() > SET_TIME + 1500) {
+								enemyLifeBar.value -= 2;
+								if (enemyLifeBar.value < 0) {
+									this.assets["sound/co.wav"].play();
+									battleScene.removeChild(enemyAvatar);
+								}
+							} else if (Date.now() > SET_TIME + 2000) {
+								slash.frame = [0, 1, 2, 3, 4, 5, 6, 7, 8, null];
+								battleScene.removeChild(slash);
 								this.popScene(battleScene);
 								player.phaseEnd();
 							}
@@ -568,7 +599,7 @@ window.onload = function() {
 									if (cursor.x == enemy[i].x && cursor.y == enemy[i].y) {
 										// 攻撃範囲の表示をリセット
 										player.isAttack = true;
-										SetBattleScene();
+										this.pushScene(battleScene);
 										SET_TIME = Date.now();
 									}
 								}
@@ -597,15 +628,12 @@ window.onload = function() {
 							if (enemy[i].phase == "Move") {
 								// 移動モーション中か
 								if (enemy[i].isMoving) {
-									// 移動
-									enemy[i].moveBy(enemy[i].vx, enemy[i].vy);
-
 								} else {
-									if (destination = ScoutingSearch(enemy[i])) {
+									if (destination = ScoutingSearch()) {
 										enemy[i].moveTo(destination.X, destination.Y);
 									enemy[i].isMoving = false;
 									enemy[i].phase = "Attack";
-									SetBattleScene();
+									this.pushScene(battleScene);
 									SET_TIME = Date.now();
 									} else {
 										enemy[i].phaseEnd(i);
@@ -614,10 +642,13 @@ window.onload = function() {
 							// 攻撃フェーズ
 							} else if (enemy[i].phase == "Attack") {
 								var venomSE = game.assets['sound/venom.ogg'];
-								if (Date.now() > SET_TIME + 500 && Date.now() < SET_TIME + 1000) {
+								if (Date.now() > SET_TIME + 1000 && Date.now() < SET_TIME + 1500) {
 									venomSE.play();
 									battleScene.addChild(venom);
-								} else if (Date.now() > SET_TIME + 1500) {
+									playerLifeBar.value -= 1;
+								} else if (Date.now() > SET_TIME + 2000) {
+									venom.frame = [0, 1, 2, 3, 4, 5, 6, 7, 8, null];
+									battleScene.removeChild(venom);
 									this.popScene(battleScene);
 									enemy[i].phaseEnd(i);
 								}
